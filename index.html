@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>真像俱全 自媒體分析</title>
+<meta name="description" content="115年度全真影音小組 自媒體分析與精進措施：用頻道公開數據看懂現況，對照熱門短影音，提出精進做法。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#FFF8EE; --card:#FFFFFF; --ink:#282828; --muted:#6E6E6E; --line:#E6DED2;
+  --blue:#1F4E79; --orange:#E07B39; --green:#3C8D5A; --red:#C0392B; --purple:#785AA0;
+  --soft:#FFF3E3; --fs:20px;
+}
+*{box-sizing:border-box}
+html{font-size:var(--fs);scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans TC","Microsoft JhengHei",sans-serif;line-height:1.7}
+a{color:var(--blue)}
+header{background:var(--blue);color:#fff;padding:2.2rem 16px 1.6rem;text-align:center}
+header .kicker{font-size:.95rem;opacity:.85;letter-spacing:.1em}
+header h1{margin:.3rem 0 .2rem;font-size:2.2rem;font-weight:900;line-height:1.3}
+header .tag{color:#FFD9B8;font-size:1.15rem;font-weight:700}
+header .meta{margin-top:.8rem;font-size:.85rem;opacity:.9}
+nav{position:sticky;top:0;z-index:20;background:#fff;border-bottom:3px solid var(--orange);display:flex;gap:.4rem;overflow-x:auto;padding:.5rem 12px;align-items:center}
+nav a{flex:0 0 auto;text-decoration:none;color:var(--ink);font-weight:700;font-size:.85rem;padding:.35rem .8rem;border-radius:999px;background:var(--soft)}
+nav a:hover,nav a.on{background:var(--orange);color:#fff}
+.fsbox{margin-left:auto;display:flex;gap:.3rem;flex:0 0 auto}
+.fsbox button{font:inherit;font-weight:900;font-size:.85rem;border:2px solid var(--blue);background:#fff;color:var(--blue);border-radius:10px;padding:.15rem .6rem;cursor:pointer}
+.fsbox button.on{background:var(--blue);color:#fff}
+main{max-width:1100px;margin:0 auto;padding:0 16px 3rem}
+section{padding-top:2.2rem;scroll-margin-top:4.4rem}
+h2{font-size:1.6rem;margin:0 0 .8rem;padding-left:.7rem;border-left:.45rem solid var(--orange);line-height:1.35}
+h3{font-size:1.2rem;margin:1.2rem 0 .5rem;color:var(--blue)}
+.card{background:var(--card);border:2px solid var(--line);border-radius:22px;padding:1.2rem 1.3rem;margin:1rem 0}
+.plain{background:var(--soft);border:2px solid var(--orange);border-radius:16px;padding:.8rem 1.1rem;font-weight:700;margin:1rem 0}
+.plain::before{content:"白話說：";color:var(--orange)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem}
+.tile{background:#fff;border:2px solid var(--line);border-radius:20px;padding:1rem;text-align:center}
+.tile .n{font-size:2.6rem;font-weight:900;line-height:1.1}
+.tile .u{font-size:.9rem;color:var(--muted)}
+.tile .l{font-weight:700;margin-top:.3rem}
+.tile .h{font-size:.8rem;color:var(--muted);margin-top:.3rem}
+.people{display:flex;gap:.3rem;flex-wrap:nowrap;justify-content:center;margin:.6rem 0}
+.person{width:clamp(1.4rem,7vw,2.3rem);aspect-ratio:2/3;position:relative;transition:transform .3s}
+.person::before{content:"";position:absolute;left:25%;top:0;width:50%;height:36%;border-radius:50%;background:var(--c,#E1DCD2)}
+.person::after{content:"";position:absolute;left:8%;bottom:0;width:84%;height:58%;border-radius:40% 40% 18% 18%;background:var(--c,#E1DCD2)}
+.big{font-size:1.4rem;font-weight:900;text-align:center}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem}
+.chartbox{position:relative;height:360px}
+.chartbox.tall{height:420px}
+.hint{font-size:.8rem;color:var(--muted);text-align:center;margin-top:.3rem}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th{background:var(--blue);color:#fff;padding:.5rem;text-align:left;position:sticky;top:0}
+td{padding:.5rem;border-bottom:1px solid var(--line);vertical-align:top}
+tr:nth-child(even) td{background:#FBF6EE}
+.cmp td:nth-child(2){color:var(--red)} .cmp td:nth-child(3){color:var(--green);font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin:.6rem 0}
+.chip{font:inherit;font-size:.85rem;font-weight:700;border:2px solid var(--blue);color:var(--blue);background:#fff;border-radius:999px;padding:.2rem .8rem;cursor:pointer}
+.chip.on{background:var(--blue);color:#fff}
+.controls{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center}
+.controls input,.controls select{font:inherit;font-size:.9rem;padding:.35rem .6rem;border:2px solid var(--line);border-radius:10px;min-width:0;flex:1 1 200px}
+.vbar{height:.8rem;background:var(--orange);border-radius:6px;min-width:4px}
+.tablewrap{max-height:560px;overflow:auto;border:2px solid var(--line);border-radius:14px;background:#fff}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:1rem}
+.step{background:#fff;border:2px solid var(--line);border-radius:20px;padding:1rem;cursor:pointer;text-align:center;transition:box-shadow .2s}
+.step:hover{box-shadow:0 6px 18px rgba(0,0,0,.08)}
+.step .no{width:3rem;height:3rem;border-radius:50%;color:#fff;font-weight:900;font-size:1.4rem;display:grid;place-items:center;margin:0 auto .4rem}
+.step .k{font-weight:900;font-size:1.2rem}
+.step .d{font-size:.9rem;color:var(--muted)}
+.step .more{display:none;text-align:left;font-size:.9rem;margin-top:.6rem;border-top:2px dashed var(--line);padding-top:.6rem}
+.step.open .more{display:block}
+.flip{display:grid;grid-template-columns:1fr auto 1fr;gap:.6rem;align-items:center;margin:.6rem 0}
+.flip .a{background:#fff;border:2px solid var(--line);border-radius:14px;padding:.6rem .9rem;color:var(--muted)}
+.flip .b{background:#EAF4EC;border:2px solid var(--green);border-radius:14px;padding:.6rem .9rem;font-weight:700;color:var(--green)}
+.flip .arrow{font-size:1.6rem;color:var(--orange);font-weight:900}
+.goal{margin:1rem 0}
+.goal .row{display:flex;justify-content:space-between;font-weight:700;gap:.6rem;flex-wrap:wrap}
+.track{position:relative;height:1.6rem;background:#F0E9DE;border-radius:999px;overflow:hidden;margin-top:.3rem}
+.track .now{position:absolute;left:0;top:0;bottom:0;background:var(--muted);border-radius:999px;transition:width 1s}
+.track .tgt{position:absolute;left:0;top:0;bottom:0;background:var(--green);opacity:.35;border-radius:999px;transition:width 1.4s}
+.gantt{overflow-x:auto}
+.gantt table{min-width:760px;font-size:.8rem}
+.gantt td.on{background:var(--orange)!important}
+.gantt td,.gantt th{text-align:center;border:1px solid var(--line)}
+.gantt td:first-child,.gantt th:first-child{text-align:left;white-space:nowrap}
+footer{background:#fff;border-top:3px solid var(--orange);padding:1.5rem 16px;font-size:.8rem;color:var(--muted)}
+footer .in{max-width:1100px;margin:0 auto}
+@media (max-width:640px){
+  header h1{font-size:1.7rem}
+  .chartbox{height:300px}
+  .flip{grid-template-columns:1fr}
+  .flip .arrow{transform:rotate(90deg);text-align:center}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="kicker">115年度 全真「真像俱全」影音小組</div>
+  <h1>自媒體分析與精進措施</h1>
+  <div class="tag">長片顧好老朋友，短片認識新朋友</div>
+  <div class="meta">提出人：全真影音 賴錦坤助理　｜　資料：頻道公開數據，統計至115年11月2日</div>
+</header>
+<nav id="nav">
+  <a href="#why">緣由</a><a href="#now">頻道現況</a><a href="#type">哪種影片</a><a href="#len">影片長度</a><a href="#title">標題</a><a href="#cmp">對照</a><a href="#act">精進措施</a><a href="#goal">目標</a><a href="#plan">期程</a><a href="#list">影片查詢</a>
+  <div class="fsbox" aria-label="字體大小"><button data-fs="18">小</button><button data-fs="20" class="on">中</button><button data-fs="24">大</button></div>
+</nav>
+<main>
+
+<section id="why">
+  <h2>一、大家都在滑「短影音」</h2>
+  <div class="grid2">
+    <div class="card">
+      <div class="people" id="tw10"></div>
+      <div class="big">每10個台灣人，約<span style="color:var(--green)">8人</span>看短影音</div>
+      <p style="text-align:center;margin:.4rem 0 0">近6成的人「幾乎每天」都看<br><span style="color:var(--muted);font-size:.85rem">YouTube短影片每天被看2000億次</span></p>
+    </div>
+    <div class="card" style="text-align:center">
+      <div style="font-weight:900;color:var(--blue);font-size:1.2rem">我們的頻道</div>
+      <div>短影片只有</div>
+      <div style="font-size:4rem;font-weight:900;color:var(--red);line-height:1.1"><span class="count" data-to="1">0</span> 部</div>
+      <div style="font-weight:900;color:var(--red);font-size:1.2rem">觀看 <span class="count" data-to="20">0</span> 次</div>
+      <div style="color:var(--muted)">長影片 81 部</div>
+    </div>
+  </div>
+  <div class="plain">現在大家拿起手機，滑的多是1分鐘內的直式短影片；我們的影片大多是幾分鐘的長片，年輕人很少會滑到。</div>
+  <p>我們不禁要問：「<b>我們的影片，有被滑到嗎？</b>」以下用頻道上公開的影片數據，一步一步看。</p>
+</section>
+
+<section id="now">
+  <h2>二、頻道現況一眼看</h2>
+  <div class="tiles">
+    <div class="tile"><div class="n" style="color:var(--blue)"><span class="count" data-to="87">0</span></div><div class="u">部</div><div class="l">上傳影片</div><div class="h">長片81、短片1、直播5</div></div>
+    <div class="tile"><div class="n" style="color:var(--green)"><span class="count" data-to="69360">0</span></div><div class="u">次</div><div class="l">81部長片累積觀看</div><div class="h">頻道上公開的觀看數加總</div></div>
+    <div class="tile"><div class="n" style="color:var(--orange)"><span class="count" data-to="616">0</span></div><div class="u">位</div><div class="l">訂閱的人</div><div class="h">按了「訂閱」的人</div></div>
+    <div class="tile"><div class="n" style="color:var(--red)"><span class="count" data-to="443">0</span></div><div class="u">次</div><div class="l">每部影片觀看中間值</div><div class="h">一半影片高於、一半低於這個數</div></div>
+    <div class="tile"><div class="n" style="color:var(--purple)">4<span style="font-size:1.4rem">分</span></div><div class="u">片長中間值</div><div class="l">2分鐘內的只有9部</div></div>
+    <div class="tile"><div class="n" style="color:var(--blue)"><span class="count" data-to="306">0</span></div><div class="u">次</div><div class="l">近一年新片觀看中間值</div><div class="h">兩年前那批約704次</div></div>
+  </div>
+  <div class="plain">影片做了不少，但每部大多只有三、四百人看；最近一年新上傳的影片，看的人比兩年前還少。</div>
+  <p class="hint" style="text-align:left">註：新影片累積觀看的時間較短，年度比較僅供參考。</p>
+</section>
+
+<section id="type">
+  <h2>三、哪一種影片最多人看？</h2>
+  <div class="card"><div class="chartbox tall"><canvas id="cType"></canvas></div><div class="hint">點一下長條，下方「影片查詢」會只顯示這一類影片</div></div>
+  <div class="plain">有歌、有情感、有人物的影片最多人看；數量最多的「班程營隊回顧」（28部），每部只有約300人看。</div>
+</section>
+
+<section id="len">
+  <h2>四、影片長度與觀看</h2>
+  <div class="card"><div class="chartbox"><canvas id="cLen"></canvas></div><div class="hint">各長度影片的部數（長條）與每部觀看中間值（點一下看數字）</div></div>
+  <div class="plain">我們的影片大多在2到6分鐘；1分鐘內的短片，頻道上幾乎沒有。</div>
+</section>
+<section id="title">
+  <h2>五、標題像公文，陌生人不會點</h2>
+  <div class="tiles">
+    <div class="tile"><div class="n" style="color:var(--red)"><span class="count" data-to="45">0</span><span style="font-size:1.4rem">/81</span></div><div class="l">標題用單位名或年度開頭</div><div class="h">例如「瑞周全真｜」「基礎忠恕｜」「114年」</div></div>
+    <div class="tile"><div class="n" style="color:var(--orange)"><span class="count" data-to="18">0</span><span style="font-size:1.4rem">部</span></div><div class="l">標題裡有「回顧」兩個字</div></div>
+  </div>
+  <div class="plain">圈外的人看到「瑞周全真｜○○回顧」，不知道影片在講什麼，也就不會點進來。</div>
+</section>
+
+<section id="cmp">
+  <h2>六、我們的影片 vs 熱門短影音</h2>
+  <div class="card">
+    <div class="flip"><div class="a">長度：3～6分鐘</div><div class="arrow">→</div><div class="b">30～60秒</div></div>
+    <div class="flip"><div class="a">畫面：橫的（像電視）</div><div class="arrow">→</div><div class="b">直的（像手機）</div></div>
+    <div class="flip"><div class="a">開頭：片頭、字卡、介紹單位</div><div class="arrow">→</div><div class="b">第1秒就是重點</div></div>
+    <div class="flip"><div class="a">字幕：幾乎沒有</div><div class="arrow">→</div><div class="b">每句都有大字幕</div></div>
+    <div class="flip"><div class="a">標題：「瑞周全真｜○○回顧」</div><div class="arrow">→</div><div class="b">一句問題或亮點</div></div>
+    <div class="flip"><div class="a">發佈：跟著活動，不固定</div><div class="arrow">→</div><div class="b">固定每週發佈</div></div>
+  </div>
+  <div class="plain">短影音不是要取代長片，是讓陌生人先「滑到」我們，有興趣了再來看完整長片、甚至走進道場。</div>
+</section>
+
+<section id="act">
+  <h2>七、五個改變，馬上可以做</h2>
+  <p class="hint" style="text-align:left">點一下卡片，可以看詳細做法</p>
+  <div class="steps" id="steps"></div>
+  <h3>標題改寫示範（點一下看改寫後）</h3>
+  <div id="titles"></div>
+  <div class="plain">不必買新設備，用現有人力、現有素材就能開始。</div>
+</section>
+
+<section id="goal">
+  <h2>八、一年後，我們希望看到</h2>
+  <div class="card" id="goals"></div>
+  <p class="hint" style="text-align:left">灰色是現在，綠色是116年底目標。目標值為本小組預估，每季依後台數據滾動調整。</p>
+</section>
+
+<section id="plan">
+  <h2>九、計劃期程</h2>
+  <div class="card gantt" id="gantt"></div>
+  <p class="hint" style="text-align:left">116年1月至6月為試行期，7月提出期中報告。</p>
+</section>
+
+<section id="list">
+  <h2>十、影片查詢</h2>
+  <div class="card">
+    <div class="chips" id="chips"></div>
+    <div class="controls">
+      <input id="q" type="search" placeholder="輸入關鍵字，例如：讀經、新春">
+      <select id="sort"><option value="v">觀看次數：多到少</option><option value="vr">觀看次數：少到多</option><option value="s">影片長度：短到長</option><option value="sr">影片長度：長到短</option></select>
+    </div>
+    <p id="sum" style="font-weight:700"></p>
+    <div class="tablewrap"><table><thead><tr><th>影片名稱</th><th>類型</th><th>長度</th><th style="min-width:9rem">觀看次數</th></tr></thead><tbody id="tb"></tbody></table></div>
+  </div>
+</section>
+</main>
+<footer><div class="in">
+  資料來源：真像俱全YouTube頻道公開數據（影片觀看數、片長、訂閱數，統計至115年11月2日）；TWNIC《2025台灣網路報告》；資策會MIC《台灣影音觀看行為調查》；YouTube官方公布之Shorts每日觀看數。<br>
+  製作：全真「真像俱全」影音小組
+</div></footer>
+
+<script>
+const VIDEOS = [{"t": "全齡超能營／瑞周全真115年未來領袖領航營", "len": "1:36", "sec": 96, "v": 232, "age": "2 個月前", "c": "班程營隊回顧"}, {"t": "瑞周全真 - 天儲堂12週年慶紀念影片", "len": "5:12", "sec": 312, "v": 350, "age": "2 個月前", "c": "緬懷紀念"}, {"t": "瑞周全真｜115年三美暖心營 FEAT.天儲 金剛", "len": "5:25", "sec": 325, "v": 312, "age": "2 個月前", "c": "班程營隊回顧"}, {"t": "【2026 基礎忠恕孝馨獎｜頒獎典禮精彩回顧】", "len": "6:33", "sec": 393, "v": 306, "age": "3 個月前", "c": "典禮法會回顧"}, {"t": "《大愛憶心田》瑞周全真天儲版 - (K拉字幕) 詞曲：文靜", "len": "5:47", "sec": 347, "v": 480, "age": "4 個月前", "c": "音樂MV"}, {"t": "2026年4月26日基礎忠恕孝馨獎書法繪畫比賽回顧影片", "len": "2:55", "sec": 175, "v": 254, "age": "5 個月前", "c": "典禮法會回顧"}, {"t": "瑞周全真｜2026運動體驗營：「體」之卷 feat.天罡", "len": "5:18", "sec": 318, "v": 314, "age": "7 個月前", "c": "班程營隊回顧"}, {"t": "瑞周全真｜2026運動體驗營：「技」之卷 feat.天罡", "len": "5:00", "sec": 300, "v": 232, "age": "7 個月前", "c": "班程營隊回顧"}, {"t": "瑞周全真｜2026運動體驗營：「心」之卷 feat.天罡", "len": "5:07", "sec": 307, "v": 260, "age": "7 個月前", "c": "班程營隊回顧"}, {"t": "115 瑞周全真天儲區親子讀經同樂會回顧影片", "len": "3:04", "sec": 184, "v": 281, "age": "7 個月前", "c": "班程營隊回顧"}, {"t": "瑞周全真｜115年瑞周全真明德道院點燈祈福法會", "len": "4:14", "sec": 254, "v": 203, "age": "7 個月前", "c": "典禮法會回顧"}, {"t": "2026 瑞周全真天儲區團圓日 新春聯誼活動", "len": "2:51", "sec": 171, "v": 231, "age": "7 個月前", "c": "新春談話"}, {"t": "基礎忠恕瑞周全真道院45週年院慶紀念影片", "len": "4:01", "sec": 241, "v": 684, "age": "9 個月前", "c": "緬懷紀念"}, {"t": "弘道45載 再創新道程｜115年瑞周全真道院簡介", "len": "17:14", "sec": 1034, "v": 291, "age": "9 個月前", "c": "形象宣傳"}, {"t": "瑞周全真｜114年度基礎忠恕瑞周全真大小狀元讀經會考", "len": "6:52", "sec": 412, "v": 443, "age": "9 個月前", "c": "班程營隊回顧"}, {"t": "瑞周全真｜全真新形象影片「欸，你這週末有空嗎？」", "len": "1:30", "sec": 90, "v": 501, "age": "9 個月前", "c": "形象宣傳"}, {"t": "一貫道白陽祖師傳道120周年基礎忠恕團隊12/13彩排紀錄-忠恕之道", "len": "2:42", "sec": 162, "v": 904, "age": "10 個月前", "c": "典禮法會回顧"}, {"t": "一貫道白陽祖師傳道120週年紀念感恩大會 基礎忠恕國樂團暨舞蹈表演記錄 (4K)", "len": "4:41", "sec": 281, "v": 200, "age": "10 個月前", "c": "緬懷紀念"}, {"t": "基礎忠恕瑞周 | 周前人成道20週年 緬懷感恩大會回顧 【感恩前人】", "len": "4:00", "sec": 240, "v": 255, "age": "10 個月前", "c": "緬懷紀念"}, {"t": "瑞周全真｜白陽祖師傳道120週年紀念會：青春舞道動跳紀錄片", "len": "9:27", "sec": 567, "v": 1025, "age": "10 個月前", "c": "典禮法會回顧"}, {"t": "2025 基礎忠恕花蓮光復鄉賑災", "len": "2:47", "sec": 167, "v": 597, "age": "11 個月前", "c": "典禮法會回顧"}, {"t": "2025年8月16日瑞周全真4C積木防災科學營_回顧影片", "len": "3:57", "sec": 237, "v": 92, "age": "1 年前", "c": "班程營隊回顧"}, {"t": "基礎忠恕｜114年基礎忠恕光明居住宿長照機構上樑典禮", "len": "1:36", "sec": 96, "v": 566, "age": "1 年前", "c": "典禮法會回顧"}, {"t": "瑞周全真｜全真青春舞道第一次團練（1140823）", "len": "3:54", "sec": 234, "v": 385, "age": "1 年前", "c": "典禮法會回顧"}, {"t": "瑞周全真 | 心靈成長班【教你更幸福，心靈更滿足】", "len": "2:01", "sec": 121, "v": 167, "age": "1 年前", "c": "班程營隊回顧"}, {"t": "1140622 全真師資研習", "len": "4:02", "sec": 242, "v": 331, "age": "1 年前", "c": "班程營隊回顧"}, {"t": "「大愛憶心田」基礎忠恕道場創作 詞曲：文靜", "len": "5:47", "sec": 347, "v": 1759, "age": "1 年前", "c": "音樂MV"}, {"t": "瑞周全真 | 114天儲區道務共識營", "len": "6:27", "sec": 387, "v": 181, "age": "1 年前", "c": "班程營隊回顧"}, {"t": "114運動體驗營(下集) - 基礎忠恕瑞周全真 天罡 精德", "len": "3:07", "sec": 187, "v": 785, "age": "1 年前", "c": "班程營隊回顧"}, {"t": "114運動體驗營(上集) - 基礎忠恕瑞周全真 天罡 精德", "len": "3:25", "sec": 205, "v": 800, "age": "1 年前", "c": "班程營隊回顧"}, {"t": "2025 基礎忠恕六都學界大會師", "len": "4:51", "sec": 291, "v": 641, "age": "1 年前", "c": "典禮法會回顧"}, {"t": "瑞周全真｜113年度瑞周全真經典會考", "len": "3:11", "sec": 191, "v": 407, "age": "1 年前", "c": "班程營隊回顧"}, {"t": "114 基礎忠恕瑞周全真天儲區親子讀經童樂會", "len": "5:00", "sec": 300, "v": 516, "age": "1 年前", "c": "班程營隊回顧"}, {"t": "2025 基礎忠恕瑞周全真新春賀歲 4K", "len": "3:00", "sec": 180, "v": 1361, "age": "1 年前", "c": "新春談話"}, {"t": "瑞周全真｜影音小組年度回顧誌謝", "len": "3:24", "sec": 204, "v": 275, "age": "1 年前", "c": "典禮法會回顧"}, {"t": "【2024忠恕青年大會師～蜂起雲湧】 (白陽時代)", "len": "4:00", "sec": 240, "v": 1500, "age": "1 年前", "c": "典禮法會回顧"}, {"t": "2024忠恕青年大事紀", "len": "5:44", "sec": 344, "v": 446, "age": "1 年前", "c": "典禮法會回顧"}, {"t": "2024忠恕青年小會師回顧", "len": "3:24", "sec": 204, "v": 235, "age": "1 年前", "c": "典禮法會回顧"}, {"t": "瑞周全真｜【全真社青班】 城市尋寶-鶯歌", "len": "3:23", "sec": 203, "v": 238, "age": "1 年前", "c": "班程營隊回顧"}, {"t": "基礎忠恕｜2024劉總領導柬埔寨行道紀實", "len": "10:57", "sec": 657, "v": 821, "age": "1 年前", "c": "典禮法會回顧"}, {"t": "基礎忠恕｜113年柬埔寨基礎忠恕幹部聯合法會回顧", "len": "5:37", "sec": 337, "v": 422, "age": "1 年前", "c": "典禮法會回顧"}, {"t": "瑞周全真｜「說到讀經班…」親子讀經班報導系列：天如信義", "len": "3:18", "sec": 198, "v": 211, "age": "2 年前", "c": "班程營隊回顧"}, {"t": "社會實踐｜113民義國小動物保護體驗營隊紀錄片", "len": "16:12", "sec": 972, "v": 67, "age": "2 年前", "c": "班程營隊回顧"}, {"t": "瑞周全真｜113年天參天健師尊成道紀念活動", "len": "2:48", "sec": 168, "v": 229, "age": "2 年前", "c": "典禮法會回顧"}, {"t": "2024 忠恕青年大會師蜂起雲湧預告片", "len": "3:33", "sec": 213, "v": 1502, "age": "2 年前", "c": "形象宣傳"}, {"t": "瑞周全真｜「說到讀經班…」親子讀經班報導系列：天儲五權", "len": "3:58", "sec": 238, "v": 239, "age": "2 年前", "c": "班程營隊回顧"}, {"t": "瑞周全真｜「說到讀經班…」親子讀經班報導系列：至善天翔", "len": "3:43", "sec": 223, "v": 363, "age": "2 年前", "c": "班程營隊回顧"}, {"t": "瑞周全真 ｜「敬天護地環保愛地球」113年天如讀經班親子夏令營", "len": "5:42", "sec": 342, "v": 469, "age": "2 年前", "c": "班程營隊回顧"}, {"t": "一貫道基礎東京忠恕道院25周年紀念 (開創精神)", "len": "4:15", "sec": 255, "v": 1572, "age": "2 年前", "c": "典禮法會回顧"}, {"t": "瑞周全真｜2024至善親子科學營影片活動回顧", "len": "2:54", "sec": 174, "v": 361, "age": "2 年前", "c": "班程營隊回顧"}, {"t": "瑞周全真｜2024至善親子科學營-精選相片回顧", "len": "6:24", "sec": 384, "v": 537, "age": "2 年前", "c": "班程營隊回顧"}, {"t": "瑞周全真｜陳正夫點傳師告別式暨生平道範 (中英文字幕版)", "len": "4:04", "sec": 244, "v": 2193, "age": "2 年前", "c": "緬懷紀念"}, {"t": "感恩道場(MV)- 緬懷張培成老前人紀念影片", "len": "4:30", "sec": 270, "v": 6472, "age": "2 年前", "c": "音樂MV"}, {"t": "瑞周全真 ｜ 天儲教育基金會【仁區生活教育研習活動】", "len": "4:13", "sec": 253, "v": 261, "age": "2 年前", "c": "班程營隊回顧"}, {"t": "基礎忠恕｜113年基礎忠恕孝馨獎頒獎精彩影片", "len": "2:42", "sec": 162, "v": 600, "age": "2 年前", "c": "典禮法會回顧"}, {"t": "基礎忠恕｜113忠恕青年小會師 全真Ｘ精德Ｘ天罡 精彩回顧", "len": "1:57", "sec": 117, "v": 833, "age": "2 年前", "c": "典禮法會回顧"}, {"t": "基礎忠恕｜113年孝馨獎系列活動 孝思書法 孝親繪畫比賽 回顧影片", "len": "2:09", "sec": 129, "v": 681, "age": "2 年前", "c": "典禮法會回顧"}, {"t": "瑞周全真｜天選家壇活化實例分享【禮節演練 讀書會】", "len": "2:00", "sec": 120, "v": 422, "age": "2 年前", "c": "典禮法會回顧"}, {"t": "基礎忠恕｜甲辰龍年劉總領導點傳師新春賀詞", "len": "3:42", "sec": 222, "v": 1074, "age": "2 年前", "c": "新春談話"}, {"t": "2024 基礎忠恕瑞周全真新春拜年 4K", "len": "4:42", "sec": 282, "v": 2918, "age": "2 年前", "c": "新春談話"}, {"t": "瑞周全真｜113天儲全家福聯歡會_回顧", "len": "5:13", "sec": 313, "v": 707, "age": "2 年前", "c": "班程營隊回顧"}, {"t": "瑞周全真｜112年度瑞周全真大小狀元讀經會考 回顧", "len": "3:09", "sec": 189, "v": 721, "age": "2 年前", "c": "班程營隊回顧"}, {"t": "【沒有劇透】嘿 明年和我們來點Chill吧！", "len": "3:12", "sec": 192, "v": 704, "age": "2 年前", "c": "形象宣傳"}, {"t": "《幸福頌》MV - 青年大會師 | 112年忠恕青年1+1法會", "len": "4:03", "sec": 243, "v": 1636, "age": "2 年前", "c": "音樂MV"}, {"t": "基礎忠恕｜鼎居住宿長照機構揭牌啟用典禮", "len": "1:30", "sec": 90, "v": 2782, "age": "2 年前", "c": "典禮法會回顧"}, {"t": "基礎忠恕｜112年忠恕青年1+1法會回顧", "len": "4:09", "sec": 249, "v": 763, "age": "2 年前", "c": "典禮法會回顧"}, {"t": "基礎忠恕｜112年忠恕青年1+1法會 傳承永續_活動快速回顧影片", "len": "4:39", "sec": 279, "v": 1832, "age": "3 年前", "c": "典禮法會回顧"}, {"t": "基礎忠恕瑞周全真道院形象廣告-歡迎回家", "len": "1:57", "sec": 117, "v": 3556, "age": "3 年前", "c": "形象宣傳"}, {"t": "基礎忠恕｜112年青年大會師1+1法會預告片", "len": "0:53", "sec": 53, "v": 363, "age": "3 年前", "c": "形象宣傳"}, {"t": "基礎忠恕｜112年陳德陽前人成道五週年緬懷感恩會 回顧影片", "len": "18:57", "sec": 1137, "v": 3304, "age": "3 年前", "c": "緬懷紀念"}, {"t": "2023瑞周全真天儲校園營隊-勇闖三美島", "len": "11:51", "sec": 711, "v": 173, "age": "3 年前", "c": "班程營隊回顧"}, {"t": "20230826 基礎忠恕瑞周陳德陽前人成道五週年緬懷感恩大會", "len": "5:06", "sec": 306, "v": 406, "age": "3 年前", "c": "緬懷紀念"}, {"t": "基礎忠恕｜112年瑞周全真雙親節紀念會", "len": "3:36", "sec": 216, "v": 337, "age": "3 年前", "c": "典禮法會回顧"}, {"t": "宜蘭忠恕會館｜您在宜蘭的第二個家", "len": "1:21", "sec": 81, "v": 1382, "age": "3 年前", "c": "形象宣傳"}, {"t": "2021年基礎忠恕｜瑞周全真　懷恩堂揭牌典禮", "len": "3:10", "sec": 190, "v": 305, "age": "3 年前", "c": "典禮法會回顧"}, {"t": "2023壇主法會全真道院場次回顧", "len": "2:49", "sec": 169, "v": 244, "age": "3 年前", "c": "典禮法會回顧"}, {"t": "基礎忠恕瑞周全真 第四十四屆禮節班期中聯誼", "len": "3:07", "sec": 187, "v": 245, "age": "3 年前", "c": "班程營隊回顧"}, {"t": "112年基礎忠恕｜瑞周全真讀經班招生影片", "len": "2:30", "sec": 150, "v": 315, "age": "3 年前", "c": "形象宣傳"}, {"t": "基礎忠恕瑞周陳德陽前人紀念影片  2018陳前人慈悲賜導", "len": "6:17", "sec": 377, "v": 1659, "age": "3 年前", "c": "緬懷紀念"}, {"t": "前人心 後學情(MV)", "len": "5:06", "sec": 306, "v": 5139, "age": "3 年前", "c": "音樂MV"}, {"t": "2023基礎忠恕瑞周全真陳領導點傳師&林執行點傳師新春祈福拜年", "len": "9:50", "sec": 590, "v": 1500, "age": "3 年前", "c": "新春談話"}];
+const C = {blue:'#1F4E79',orange:'#E07B39',green:'#3C8D5A',red:'#C0392B',gray:'#8A8A8A',light:'#E1DCD2',purple:'#785AA0'};
+
+// ---- font size (per-viewer convenience) ----
+function setFs(px){
+  document.documentElement.style.setProperty('--fs', px+'px');
+  document.querySelectorAll('.fsbox button').forEach(b=>b.classList.toggle('on', +b.dataset.fs===px));
+  if (window.Chart){ Chart.defaults.font.size = Math.round(px*0.8); Object.values(Chart.instances).forEach(c=>c.update()); }
+  try{ localStorage.setItem('fs', px); }catch(e){}
+}
+document.querySelectorAll('.fsbox button').forEach(b=>b.onclick=()=>setFs(+b.dataset.fs));
+
+// ---- people pictograms ----
+function people(id, n, on, color){
+  const el=document.getElementById(id);
+  for(let i=0;i<n;i++){ const p=document.createElement('div'); p.className='person'; p.dataset.on = i<on ? color : ''; el.appendChild(p); }
+}
+people('tw10',10,8,C.green);
+
+// ---- reveal on scroll: counters + pictograms + goals ----
+function countUp(el){
+  const to=+el.dataset.to, t0=performance.now(), d=1200;
+  const step=t=>{ const k=Math.min(1,(t-t0)/d); el.textContent=Math.round(to*(1-Math.pow(1-k,3))).toLocaleString('zh-TW'); if(k<1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+const io = new IntersectionObserver(es=>es.forEach(e=>{
+  if(!e.isIntersecting) return;
+  const t=e.target;
+  if(t.classList.contains('count')) countUp(t);
+  if(t.classList.contains('people')) [...t.children].forEach((p,i)=>setTimeout(()=>{ if(p.dataset.on){ p.style.setProperty('--c', p.dataset.on); p.style.transform='translateY(-4px)'; setTimeout(()=>p.style.transform='',250);} }, i*120));
+  if(t.id==='goals') t.querySelectorAll('[data-w]').forEach(b=>b.style.width=b.dataset.w+'%');
+  io.unobserve(t);
+}),{threshold:.4});
+document.querySelectorAll('.count,.people').forEach(el=>io.observe(el));
+
+// ---- charts ----
+function median(a){ const s=[...a].sort((x,y)=>x-y), m=s.length>>1; return s.length?(s.length%2?s[m]:Math.round((s[m-1]+s[m])/2)):0; }
+let fs0=20; try{ fs0=+(localStorage.getItem('fs')||20); }catch(e){}
+Chart.defaults.font.family='"Noto Sans TC","Microsoft JhengHei",sans-serif';
+Chart.defaults.font.size=Math.round(fs0*0.8);
+Chart.defaults.color='#282828';
+Chart.defaults.plugins.legend.display=false;
+Chart.defaults.plugins.tooltip.padding=12;
+const pct = v => v+'%';
+function hbar(id, labels, data, colors, unit, onClick){
+  return new Chart(document.getElementById(id),{type:'bar',data:{labels,datasets:[{data,backgroundColor:colors,borderRadius:8,barThickness:'flex',maxBarThickness:46}]},
+    options:{indexAxis:'y',maintainAspectRatio:false,scales:{x:{grid:{color:'#EEE'},ticks:{callback:v=>v+unit}},y:{grid:{display:false}}},
+      plugins:{tooltip:{callbacks:{label:c=>' '+c.raw.toLocaleString('zh-TW')+unit}}},onClick}});
+}
+function donut(id, labels, data, colors){
+  return new Chart(document.getElementById(id),{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:colors,borderWidth:3,borderColor:'#fff'}]},
+    options:{maintainAspectRatio:false,cutout:'58%',plugins:{legend:{display:true,position:'bottom'},tooltip:{callbacks:{label:c=>' '+c.label+' '+c.raw+'%'}}}}});
+}
+
+const cats=['音樂MV','新春談話','形象宣傳','典禮法會回顧','緬懷紀念','班程營隊回顧'];
+const typeMed=cats.map(c=>median(VIDEOS.filter(v=>v.c===c).map(v=>v.v)));
+const typeCnt=cats.map(c=>VIDEOS.filter(v=>v.c===c).length);
+const typeChart=new Chart(document.getElementById('cType'),{type:'bar',data:{labels:cats.map((c,i)=>c+'（'+typeCnt[i]+'部）'),datasets:[{data:typeMed,backgroundColor:typeMed.map(v=>v>1000?C.green:v<300?C.red:C.blue),borderRadius:8,maxBarThickness:46}]},
+  options:{indexAxis:'y',maintainAspectRatio:false,scales:{x:{grid:{color:'#EEE'},ticks:{callback:v=>v+'次'}},y:{grid:{display:false}}},
+    plugins:{tooltip:{callbacks:{label:c=>' 每部約 '+c.raw.toLocaleString('zh-TW')+' 次（中間值）'}}},
+    onClick:(e,els)=>{ if(els.length){ filterCat=cats[els[0].index]; renderChips(); renderTable(); document.getElementById('list').scrollIntoView(); } }}});
+const B=[['1分鐘內',0,60],['1-2分鐘',61,120],['2-4分鐘',121,240],['4-6分鐘',241,360],['6分鐘以上',361,1e9]];
+const bc=B.map(b=>VIDEOS.filter(v=>v.sec>=b[1]&&v.sec<=b[2]));
+new Chart(document.getElementById('cLen'),{type:'bar',data:{labels:B.map(b=>b[0]),datasets:[{data:bc.map(a=>a.length),backgroundColor:bc.map((a,i)=>i===0?C.red:C.blue),borderRadius:8,maxBarThickness:70}]},
+  options:{maintainAspectRatio:false,scales:{y:{ticks:{callback:v=>v+'部'},grid:{color:'#EEE'}},x:{grid:{display:false}}},
+    plugins:{tooltip:{callbacks:{label:c=>' '+c.raw+' 部'+(c.raw?'，每部觀看中間值約 '+median(bc[c.dataIndex].map(v=>v.v))+' 次':'')}}}}});
+
+// ---- steps ----
+const STEPS=[
+ ['一片多用','每支回顧影片，多剪3支直式短片',C.orange,'拍活動時另安排1人拍直式素材。後製除了回顧長片，再剪：<b>精華版</b>（30秒看完全場）、<b>感動版</b>（一個人、一句話）、<b>花絮版</b>（有趣的小插曲）。'],
+ ['黃金三秒','開頭直接放最精彩的畫面',C.blue,'不放片頭動畫與單位字卡。第1秒就是最感動的一句話、最精彩的畫面，或一個問題；單位名稱放在最後3秒。'],
+ ['字幕必上','每一句話都打上大字幕',C.green,'字大到約畫面高度的1/12，白字黑邊或黃字黑邊。先用剪輯軟體自動產生，再請人校對錯字——長者學長也能幫忙。'],
+ ['標題白話','用一句問題取代公文標題',C.red,'寫法：「亮點或問題＋活動名稱｜瑞周全真」，單位名稱放最後。下方有改寫示範。'],
+ ['數據檢討','每季看後台4個數字',C.purple,'每季記錄：①35歲以下觀眾比例 ②觀眾來源比例 ③平均看完比例 ④短片觀看數，在小組討論會檢討，留下有效的做法。']];
+document.getElementById('steps').innerHTML=STEPS.map((s,i)=>`<div class="step" tabindex="0"><div class="no" style="background:${s[2]}">${i+1}</div><div class="k" style="color:${s[2]}">${s[0]}</div><div class="d">${s[1]}</div><div class="more">${s[3]}</div></div>`).join('');
+document.querySelectorAll('.step').forEach(el=>{ const t=()=>el.classList.toggle('open'); el.onclick=t; el.onkeydown=e=>{ if(e.key==='Enter') t(); }; });
+
+const TITLES=[['瑞周全真｜114年度基礎忠恕瑞周全真大小狀元讀經會考','孩子上台背經，緊不緊張？｜大小狀元讀經會考'],
+ ['2026 瑞周全真天儲區團圓日 新春聯誼活動','過年回道場，大家都在玩什麼？｜天儲團圓日'],
+ ['瑞周全真｜2026運動體驗營：「體」之卷 feat.天罡','一個暑假，孩子學到了什麼？｜運動體驗營']];
+document.getElementById('titles').innerHTML=TITLES.map(t=>`<div class="flip" style="cursor:pointer" title="點一下"><div class="a">${t[0]}</div><div class="arrow">→</div><div class="b" style="visibility:hidden">${t[1]}</div></div>`).join('')+'<p class="hint" style="text-align:left">示範寫法，實際標題依影片內容調整。</p>';
+document.querySelectorAll('#titles .flip').forEach(f=>f.onclick=()=>{ f.querySelector('.b').style.visibility='visible'; });
+
+// ---- goals ----
+const GOALS=[['每月短片','0 部','4 部以上',0,100],['短片累積觀看','20 次','1萬次',1,100],['每部影片觀看中間值','443 次','600 次',74,100],['訂閱人數','616 位','800 位',77,100]];
+const g=document.getElementById('goals');
+g.innerHTML=GOALS.map(x=>`<div class="goal"><div class="row"><span>${x[0]}</span><span><span style="color:var(--muted)">${x[1]}</span> <span style="color:var(--orange)">→</span> <span style="color:var(--green)">${x[2]}</span></span></div><div class="track"><div class="tgt" style="width:0" data-w="${x[4]}"></div><div class="now" style="width:0" data-w="${x[3]}"></div></div></div>`).join('');
+io.observe(g);
+
+// ---- gantt ----
+const G=[['短影音實務訓練',[0,1]],['舊片新用（剪輯既有影片）',[1,2,3]],['一片多用（每月短片4支以上）',[1,2,3,4,5,6,7,8,9,10,11,12]],['固定單元試拍與發佈',[2,3,4,5,6,7,8,9,10,11,12]],['跨平台同步發佈',[1,2,3,4,5,6,7,8,9,10,11,12]],['每季數據檢討',[3,6,9,12]],['期中報告',[7]],['期末報告',[12]]];
+const head=['115/12'].concat([...Array(12)].map((_,i)=>'116/'+(i+1)));
+document.getElementById('gantt').innerHTML='<table><thead><tr><th>工作項目</th>'+head.map(h=>`<th>${h}</th>`).join('')+'</tr></thead><tbody>'+
+  G.map(r=>'<tr><td>'+r[0]+'</td>'+head.map((_,i)=>`<td class="${r[1].includes(i)?'on':''}"></td>`).join('')+'</tr>').join('')+'</tbody></table>';
+
+// ---- video list ----
+let filterCat='全部';
+const chips=document.getElementById('chips');
+function renderChips(){
+  chips.innerHTML=['全部'].concat(cats).map(c=>`<button class="chip ${c===filterCat?'on':''}" data-c="${c}">${c}</button>`).join('');
+  chips.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{ filterCat=b.dataset.c; renderChips(); renderTable(); });
+}
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function renderTable(){
+  const q=document.getElementById('q').value.trim(), so=document.getElementById('sort').value;
+  let rows=VIDEOS.filter(v=>(filterCat==='全部'||v.c===filterCat)&&(!q||v.t.includes(q)));
+  rows.sort((a,b)=>so==='v'?b.v-a.v:so==='vr'?a.v-b.v:so==='s'?a.sec-b.sec:b.sec-a.sec);
+  const max=Math.max(...VIDEOS.map(v=>v.v));
+  document.getElementById('sum').textContent = rows.length ? `共 ${rows.length} 部，觀看次數中間值約 ${median(rows.map(r=>r.v)).toLocaleString('zh-TW')} 次` : '找不到符合的影片';
+  document.getElementById('tb').innerHTML=rows.map(v=>`<tr><td>${esc(v.t)}<div style="font-size:.75rem;color:var(--muted)">${esc(v.age)}上傳</div></td><td>${v.c}</td><td>${v.len}</td><td>${v.v.toLocaleString('zh-TW')}<div class="vbar" style="width:${Math.max(2,Math.sqrt(v.v/max)*100)}%"></div></td></tr>`).join('');
+}
+document.getElementById('q').oninput=renderTable; document.getElementById('sort').onchange=renderTable;
+renderChips(); renderTable();
+
+// ---- nav highlight ----
+const secs=[...document.querySelectorAll('main section')];
+const nio=new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting){ document.querySelectorAll('nav a').forEach(a=>a.classList.toggle('on',a.getAttribute('href')==='#'+e.target.id)); } }),{rootMargin:'-40% 0px -55% 0px'});
+secs.forEach(s=>nio.observe(s));
+
+setFs(fs0);
+</script>
+</body>
+</html>
