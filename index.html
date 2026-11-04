@@ -30,6 +30,18 @@ nav a:hover,nav a.on{background:var(--orange);color:#fff}
 .fsbox button{font:inherit;font-weight:900;font-size:.85rem;border:2px solid var(--blue);background:#fff;color:var(--blue);border-radius:10px;padding:.15rem .6rem;cursor:pointer}
 .fsbox button.on{background:var(--blue);color:#fff}
 main{max-width:1100px;margin:0 auto;padding:0 16px 3rem}
+.fsbox .pbtn{border-color:var(--orange);background:var(--orange);color:#fff;margin-left:.3rem;white-space:nowrap}
+.pbar{display:none}
+body.present nav,body.present footer,body.present header,body.present main>section{display:none}
+body.present header.slide-on{display:flex;flex-direction:column;justify-content:center;min-height:100vh;padding-bottom:5rem}
+body.present header.slide-on h1{font-size:3.2rem}
+body.present main{max-width:1250px;padding:1.2rem 24px 6rem}
+body.present main>section.slide-on{display:block;padding-top:.5rem;min-height:calc(100vh - 7rem)}
+body.present .pbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:30;justify-content:center;align-items:center;gap:.8rem;padding:.6rem 12px;background:rgba(255,255,255,.95);border-top:3px solid var(--orange)}
+.pbar button{font:inherit;font-weight:900;font-size:.9rem;border:2px solid var(--blue);background:#fff;color:var(--blue);border-radius:12px;padding:.3rem 1rem;cursor:pointer}
+.pbar button:disabled{opacity:.3;cursor:default}
+.pbar #pexit{border-color:var(--muted);color:var(--muted)}
+.pbar #pcount{font-weight:900;min-width:4.5rem;text-align:center}
 section{padding-top:2.2rem;scroll-margin-top:4.4rem}
 h2{font-size:1.6rem;margin:0 0 .8rem;padding-left:.7rem;border-left:.45rem solid var(--orange);line-height:1.35}
 h3{font-size:1.2rem;margin:1.2rem 0 .5rem;color:var(--blue)}
@@ -104,7 +116,7 @@ footer .in{max-width:1100px;margin:0 auto}
 </header>
 <nav id="nav">
   <a href="#why">緣由</a><a href="#now">頻道現況</a><a href="#type">哪種影片</a><a href="#len">影片長度</a><a href="#title">標題</a><a href="#cmp">對照</a><a href="#act">精進措施</a><a href="#goal">目標</a><a href="#plan">期程</a><a href="#list">影片查詢</a>
-  <div class="fsbox" aria-label="字體大小"><button data-fs="18">小</button><button data-fs="20" class="on">中</button><button data-fs="24">大</button></div>
+  <div class="fsbox" aria-label="字體大小"><button data-fs="18">小</button><button data-fs="20" class="on">中</button><button data-fs="24">大</button><button id="pbtn" class="pbtn" title="全螢幕一頁一頁播放（← → 換頁，Esc 離開）">▶ 簡報模式</button></div>
 </nav>
 <main>
 
@@ -209,6 +221,7 @@ footer .in{max-width:1100px;margin:0 auto}
   </div>
 </section>
 </main>
+<div class="pbar" role="toolbar" aria-label="簡報控制"><button id="pprev">◀ 上一頁</button><span id="pcount"></span><button id="pnext">下一頁 ▶</button><button id="pexit">✕ 離開</button></div>
 <footer><div class="in">
   資料來源：真像俱全YouTube頻道公開數據（影片觀看數、片長、訂閱數，統計至115年11月2日）；TWNIC《2025台灣網路報告》；資策會MIC《台灣影音觀看行為調查》；YouTube官方公布之Shorts每日觀看數。<br>
   製作：全真「真像俱全」影音小組
@@ -219,13 +232,65 @@ const VIDEOS = [{"t": "全齡超能營／瑞周全真115年未來領袖領航營
 const C = {blue:'#1F4E79',orange:'#E07B39',green:'#3C8D5A',red:'#C0392B',gray:'#8A8A8A',light:'#E1DCD2',purple:'#785AA0'};
 
 // ---- font size (per-viewer convenience) ----
-function setFs(px){
+let curFs=20;
+function setFs(px, keep){
+  curFs=px;
   document.documentElement.style.setProperty('--fs', px+'px');
-  document.querySelectorAll('.fsbox button').forEach(b=>b.classList.toggle('on', +b.dataset.fs===px));
+  document.querySelectorAll('.fsbox button[data-fs]').forEach(b=>b.classList.toggle('on', +b.dataset.fs===px));
   if (window.Chart){ Chart.defaults.font.size = Math.round(px*0.8); Object.values(Chart.instances).forEach(c=>c.update()); }
-  try{ localStorage.setItem('fs', px); }catch(e){}
+  if(!keep){ try{ localStorage.setItem('fs', px); }catch(e){} }
 }
-document.querySelectorAll('.fsbox button').forEach(b=>b.onclick=()=>setFs(+b.dataset.fs));
+document.querySelectorAll('.fsbox button[data-fs]').forEach(b=>b.onclick=()=>setFs(+b.dataset.fs));
+
+// ---- presentation mode ----
+const slides=[document.querySelector('header'), ...document.querySelectorAll('main section')];
+let cur=0, fsBefore=20;
+function show(i){
+  cur=Math.max(0,Math.min(slides.length-1,i));
+  slides.forEach((s,k)=>s.classList.toggle('slide-on',k===cur));
+  document.getElementById('pcount').textContent=(cur+1)+' / '+slides.length;
+  document.getElementById('pprev').disabled=cur===0;
+  document.getElementById('pnext').disabled=cur===slides.length-1;
+  window.scrollTo({top:0,behavior:'instant'});
+  requestAnimationFrame(()=>Object.values(Chart.instances).forEach(c=>c.resize()));
+}
+function enterPresent(){
+  if(document.body.classList.contains('present')) return;
+  fsBefore=curFs;
+  // start from the section currently on screen
+  const vis=slides.findIndex(s=>{ const r=s.getBoundingClientRect(); return r.bottom>innerHeight*0.3; });
+  document.body.classList.add('present');
+  setFs(Math.max(24,curFs),true);
+  show(scrollY<120?0:Math.max(0,vis));
+  const el=document.documentElement;
+  if(el.requestFullscreen) el.requestFullscreen().catch(()=>{});
+}
+function exitPresent(){
+  if(!document.body.classList.contains('present')) return;
+  document.body.classList.remove('present');
+  slides.forEach(s=>s.classList.remove('slide-on'));
+  setFs(fsBefore,true);
+  if(document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(()=>{});
+  setTimeout(()=>{ Object.values(Chart.instances).forEach(c=>c.resize()); if(cur>0) slides[cur].scrollIntoView({behavior:'instant'}); else window.scrollTo({top:0,behavior:'instant'}); },350);
+}
+document.getElementById('pbtn').onclick=enterPresent;
+document.getElementById('pprev').onclick=()=>show(cur-1);
+document.getElementById('pnext').onclick=()=>show(cur+1);
+document.getElementById('pexit').onclick=exitPresent;
+document.addEventListener('fullscreenchange',()=>{ if(!document.fullscreenElement) exitPresent(); });
+document.addEventListener('keydown',e=>{
+  if(!document.body.classList.contains('present')) return;
+  if(['ArrowRight','PageDown',' ','Enter'].includes(e.key)){ e.preventDefault(); show(cur+1); }
+  else if(['ArrowLeft','PageUp','Backspace'].includes(e.key)){ e.preventDefault(); show(cur-1); }
+  else if(e.key==='Escape') exitPresent();
+});
+let tx=null;
+document.addEventListener('touchstart',e=>{ tx=e.touches[0].clientX; },{passive:true});
+document.addEventListener('touchend',e=>{
+  if(tx===null||!document.body.classList.contains('present')) return;
+  const dx=e.changedTouches[0].clientX-tx; tx=null;
+  if(Math.abs(dx)>60) show(cur+(dx<0?1:-1));
+},{passive:true});
 
 // ---- people pictograms ----
 function people(id, n, on, color){
@@ -275,7 +340,7 @@ const typeCnt=cats.map(c=>VIDEOS.filter(v=>v.c===c).length);
 const typeChart=new Chart(document.getElementById('cType'),{type:'bar',data:{labels:cats.map((c,i)=>c+'（'+typeCnt[i]+'部）'),datasets:[{data:typeMed,backgroundColor:typeMed.map(v=>v>1000?C.green:v<300?C.red:C.blue),borderRadius:8,maxBarThickness:46}]},
   options:{indexAxis:'y',maintainAspectRatio:false,scales:{x:{grid:{color:'#EEE'},ticks:{callback:v=>v+'次'}},y:{grid:{display:false}}},
     plugins:{tooltip:{callbacks:{label:c=>' 每部約 '+c.raw.toLocaleString('zh-TW')+' 次（中間值）'}}},
-    onClick:(e,els)=>{ if(els.length){ filterCat=cats[els[0].index]; renderChips(); renderTable(); document.getElementById('list').scrollIntoView(); } }}});
+    onClick:(e,els)=>{ if(els.length){ filterCat=cats[els[0].index]; renderChips(); renderTable(); if(document.body.classList.contains('present')) show(slides.indexOf(document.getElementById('list'))); else document.getElementById('list').scrollIntoView(); } }}});
 const B=[['1分鐘內',0,60],['1-2分鐘',61,120],['2-4分鐘',121,240],['4-6分鐘',241,360],['6分鐘以上',361,1e9]];
 const bc=B.map(b=>VIDEOS.filter(v=>v.sec>=b[1]&&v.sec<=b[2]));
 new Chart(document.getElementById('cLen'),{type:'bar',data:{labels:B.map(b=>b[0]),datasets:[{data:bc.map(a=>a.length),backgroundColor:bc.map((a,i)=>i===0?C.red:C.blue),borderRadius:8,maxBarThickness:70}]},
